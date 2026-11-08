@@ -1,0 +1,32 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4.2.2
+
+      - name: Set up MSBuild
+        uses: microsoft/setup-msbuild@v2.0.0
+
+      - name: Build (Release, x64)
+        run: msbuild MyKam.sln /t:Rebuild /p:Configuration=Release /p:Platform=x64 /m /nologo /v:m
+
+      - name: Run the unit tests
+        run: .\build\tests\Release\mykam_tests.exe
+
+      - name: Package the release zip
+        shell: pwsh
+        run: .\tools\package.ps1
+
+      - name: Upload the zip
+        uses: actions/upload-artifact@v4.6.0
+        with:
+          name: MyKam-win64
+          path: dist/MyKam-*-win64.zip
+          if-no-files-found: error

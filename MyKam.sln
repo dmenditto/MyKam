@@ -1,0 +1,40 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mykam_core", "src\core\mykam_core.vcxproj", "{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MyKam", "src\plugin\MyKam.vcxproj", "{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E02}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01} = {6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mykam_tests", "tests\mykam_tests.vcxproj", "{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E03}"
+	ProjectSection(ProjectDependencies) = postProject
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01} = {6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01}.Debug|x64.ActiveCfg = Debug|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01}.Debug|x64.Build.0 = Debug|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01}.Release|x64.ActiveCfg = Release|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01}.Release|x64.Build.0 = Release|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E02}.Debug|x64.ActiveCfg = Debug|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E02}.Debug|x64.Build.0 = Debug|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E02}.Release|x64.ActiveCfg = Release|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E02}.Release|x64.Build.0 = Release|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E03}.Debug|x64.ActiveCfg = Debug|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E03}.Debug|x64.Build.0 = Debug|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E03}.Release|x64.ActiveCfg = Release|x64
+		{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E03}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

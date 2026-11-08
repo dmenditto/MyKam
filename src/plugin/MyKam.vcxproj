@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <ProjectGuid>{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E02}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>MyKam</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <SolutionDir Condition="'$(SolutionDir)'==''">$(MSBuildThisFileDirectory)..\..\</SolutionDir>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'" Label="Configuration">
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'" Label="Configuration">
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <TargetName>MyKam</TargetName>
+    <TargetExt>.xpl</TargetExt>
+    <IntDir>$(SolutionDir)build\obj\plugin\$(Configuration)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <GenerateManifest>false</GenerateManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <OutDir>$(SolutionDir)build\MyKam\win_x64\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <OutDir>$(SolutionDir)build\debug\MyKam\win_x64\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>XPLM200;XPLM210;XPLM300;XPLM301;XPLM302;XPLM303;XPLM400;IBM=1;APL=0;LIN=0;WIN32_LEAN_AND_MEAN;NOMINMAX;IMGUI_DISABLE_WIN32_FUNCTIONS;IMGUI_DISABLE_DEMO_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)src;$(SolutionDir)third_party\XPSDK\CHeaders\XPLM;$(SolutionDir)third_party\imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)third_party\XPSDK\Libraries\Win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XPLM_64.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <!-- Store only the PDB file name in the binary, not the full build path of the machine it was built on. -->
+      <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="*.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="*.cpp" />
+  </ItemGroup>
+  <!-- Dear ImGui 1.91.5 (third_party/imgui): compiled here only, with its own warnings relaxed for these
+       files alone. Our own code above keeps warning level 4 with warnings as errors. -->
+  <ItemGroup>
+    <ClCompile Include="..\..\third_party\imgui\imgui*.cpp" Exclude="..\..\third_party\imgui\imgui_demo.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <SDLCheck>false</SDLCheck>
+    </ClCompile>
+    <ClCompile Include="..\..\third_party\imgui\backends\imgui_impl_opengl2.cpp">
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <TreatWarningAsError>false</TreatWarningAsError>
+      <SDLCheck>false</SDLCheck>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\config\mykam.ini">
+      <DeploymentContent>false</DeploymentContent>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\core\mykam_core.vcxproj">
+      <Project>{6B1F0A52-3D44-4C0E-9A57-1A2B3C4D5E01}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <!-- Lay out the default mykam.ini next to the win_x64 folder (the plugin folder). -->
+  <Target Name="CopyDefaultConfig" AfterTargets="Build">
+    <Copy SourceFiles="$(SolutionDir)config\mykam.ini" DestinationFolder="$(OutDir)..\" SkipUnchangedFiles="true" />
+  </Target>
+  <!-- The UI fonts (Inter and Material Icons) are loaded at runtime from <plugin folder>\fonts. -->
+  <Target Name="CopyFonts" AfterTargets="Build">
+    <ItemGroup>
+      <FontFile Include="$(SolutionDir)third_party\fonts\inter\Inter-Regular.ttf" />
+      <FontFile Include="$(SolutionDir)third_party\fonts\inter\Inter-SemiBold.ttf" />
+      <FontFile Include="$(SolutionDir)third_party\fonts\material\MaterialIcons-Regular.ttf" />
+    </ItemGroup>
+    <Copy SourceFiles="@(FontFile)" DestinationFolder="$(OutDir)..\fonts\" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(SolutionDir)third_party\fonts\inter\OFL.txt" DestinationFiles="$(OutDir)..\fonts\OFL-Inter.txt" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(SolutionDir)third_party\fonts\material\LICENSE" DestinationFiles="$(OutDir)..\fonts\LICENSE-MaterialIcons.txt" SkipUnchangedFiles="true" />
+  </Target>
+</Project>
