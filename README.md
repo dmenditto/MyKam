@@ -45,7 +45,9 @@ buttons, release and the menu:
 ## Install
 
 1. Quit X-Plane 12.
-2. Download `MyKam-0.9.1-beta-win64.zip` from the Releases page and unzip it.
+2. Download `MyKam-0.9.1-beta-win64.zip` from the [Releases page](https://github.com/dmenditto/MyKam/releases)
+   or from [X-Plane.org](https://forums.x-plane.org/files/file/102414-mykam-saved-cameras-with-smooth-transitions/),
+   and unzip it.
 3. Copy the `MyKam` folder into `<X-Plane 12>\Resources\plugins\`. You should end up with:
    - `Resources\plugins\MyKam\win_x64\MyKam.xpl`
    - `Resources\plugins\MyKam\mykam.ini`

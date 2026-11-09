@@ -7,6 +7,7 @@ Images used by the main README, taken in X-Plane 12 with MyKam 0.9.0-beta.
 | `overview.jpg` | The whole scene: MyKam window and quick bar over the A320 cockpit. |
 | `main-window.png` | The MyKam window on the Internal page with saved cockpit views. |
 | `quick-bar.png` | The quick bar with starred views and the X-Plane view buttons. |
+| `quick-bar-card.png` | The same quick bar at its real size on a 1280x720 card with captions, for download-site galleries that stretch thin images. |
 
 Still wanted (PNG, about 1280 pixels wide for window shots):
 
