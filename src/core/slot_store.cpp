@@ -732,7 +732,7 @@ std::string ViewStore::serialize() const {
             out += prefix + "favourite=1\n";
         }
         if (v.hotkey != 0) {
-            out += prefix + "hotkey=" + std::to_string(v.hotkey) + "\n";
+            out += prefix + "hotkey=" + hotkeyText(v.hotkey) + "\n";
         }
         if (!v.label.empty()) {
             out += prefix + "label=" + v.label + "\n";
@@ -803,13 +803,14 @@ ViewParseResult ViewStore::parse(const std::string& text) {
                     continue;
                 }
                 if (field == "hotkey") {
+                    // The file stores the key's digit: 1..9, and 0 for numpad 0 (kHotkeyZero).
                     if (value == "0") {
-                        c.hotkey = 0;
+                        c.hotkey = kHotkeyZero;
                     } else if (value.size() == 1 && value[0] >= '1' && value[0] <= '9') {
                         c.hotkey = value[0] - '0';
                     } else {
                         c.hotkey = 0;
-                        result.problems.push_back(label + ": hotkey '" + shorten(value) + "' ignored, it must be 1 to 9");
+                        result.problems.push_back(label + ": hotkey '" + shorten(value) + "' ignored, it must be 0 to 9");
                     }
                     continue;
                 }
@@ -888,7 +889,7 @@ ViewParseResult ViewStore::parse(const std::string& text) {
         if (formatFound) {
             v.hotkey = c.hotkey;
             if (v.hotkey != 0 && hotkeyOwner(v.hotkey) != 0) {
-                result.problems.push_back(label + ": hotkey " + std::to_string(v.hotkey) + " is already used by view " +
+                result.problems.push_back(label + ": hotkey " + hotkeyText(v.hotkey) + " is already used by view " +
                                           std::to_string(hotkeyOwner(v.hotkey)) + ", ignored");
                 v.hotkey = 0;
             }

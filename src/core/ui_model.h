@@ -41,7 +41,7 @@ struct EditDraft {
     std::string name;
     std::string label;
     KeyMode keyMode = KeyMode::None;
-    int numpad = 0;     // 1..9 when keyMode is Numpad
+    int numpad = 0;     // 1..10 (10 = numpad 0) when keyMode is Numpad
     CustomKey custom;   // the captured key when keyMode is Custom
     bool favourite = false;
 };
@@ -130,7 +130,10 @@ public:
     int activeView() const { return controller_.activeView(); }
     bool anySaved() const { return controller_.slots().count() > 0; }
     const Config& settings() const { return controller_.config(); }
-    bool quickBarVisible() const { return controller_.config().showQuickBar; }
+    // Hidden while MyKam is off, whatever the setting says.
+    bool quickBarVisible() const { return controller_.config().showQuickBar && controller_.active(); }
+    bool active() const { return controller_.active(); }
+    void toggleActive() { controller_.toggleActive(); }
     // The X-Plane view command the user last chose (empty if none yet); the window highlights its tile.
     const std::string& lastXPlaneView() const { return controller_.lastViewCommand(); }
     bool quickBarAtTop() const { return controller_.config().quickBarPosition == QuickBarPosition::Top; }

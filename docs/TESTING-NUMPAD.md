@@ -13,7 +13,9 @@ free keys. Turn **Num Lock ON** before testing: with Num Lock off, the numpad ke
 |-----|---------|------|
 | Numpad 1 ... Numpad 9 | `mykam/go_slot_1` ... `mykam/go_slot_9` | replaces X-Plane's `sim/view/quick_look_N` on these keys |
 | Ctrl + Alt + Numpad 1 ... 9 | `mykam/save_slot_1` ... `mykam/save_slot_9` | free in the default setup |
-| Numpad 0 | `mykam/release` | replaces `sim/view/quick_look_0` |
+| Numpad 0 | `mykam/go_slot_0` | replaces `sim/view/quick_look_0` |
+| Ctrl + Alt + Numpad 0 | `mykam/save_slot_0` | free in the default setup |
+| Numpad . | `mykam/toggle_active` | turns MyKam off and on |
 
 Optional: remove the Ctrl + Numpad 0 ... 9 bindings (`sim/view/quick_look_N_mem`), so a Ctrl press without Alt does not store an X-Plane quick look by mistake.
 
@@ -24,7 +26,7 @@ The slot cards in the MyKam window show these hints from `key_hint_go` and `key_
 2. In the search box type the command name, for example `mykam/go_slot_5`.
 3. Click the binding box on the right of the command, press the key (Numpad 5), confirm. If X-Plane says the key is used by `quick_look_5`, accept to replace it.
 4. Repeat for every row of 1.1.
-5. Search `mykam` and check you see: go 1-9 on Numpad 1-9, save 1-9 on Ctrl + Alt + Numpad 1-9, release on Numpad 0.
+5. Search `mykam` and check you see: go 0-9 on Numpad 0-9, save 0-9 on Ctrl + Alt + Numpad 0-9, on/off on Numpad . (release can stay unbound: the quick bar's Release button and Numpad . both give the camera back).
 6. Close Settings.
 
 ---
@@ -94,7 +96,7 @@ For each row: press the view key, adjust it with mouse and keys, press the save 
 Result:
 
 ### T5 Release
-1. **Numpad 2**, then while it glides press **Numpad 0** (`mykam/release`).
+1. **Numpad 2**, then while it glides click **Release** in the quick bar (or press a key bound to `mykam/release`).
 - Pass: normal X-Plane control comes back straight away.
 
 Result:

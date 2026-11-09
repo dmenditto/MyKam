@@ -274,9 +274,9 @@ TEST_CASE("save_slot: keeps the refusals, bad numbers and the empty hotkey logs"
 
     rig.sim.logs.clear();
     rig.controller.saveSlot(0);
-    rig.controller.saveSlot(10);
+    rig.controller.saveSlot(11);
     rig.controller.goToSlot(0);
-    rig.controller.goToSlot(10);
+    rig.controller.goToSlot(11);
     CHECK(rig.sim.logs.empty());
 }
 
@@ -499,7 +499,7 @@ TEST_CASE("hotkey: assign, move from another view, clear; the file follows") {
     CHECK(rig.view(b).hotkey == 0);
     CHECK_FALSE(rig.fileStore().find(b)->hotkey != 0);
 
-    CHECK_FALSE(rig.controller.setHotkey(b, 10));
+    CHECK_FALSE(rig.controller.setHotkey(b, 11));
     CHECK_FALSE(rig.controller.setHotkey(b, -1));
     CHECK_FALSE(rig.controller.setHotkey(77, 1));
 }
@@ -919,7 +919,9 @@ TEST_CASE("ui model: the nine hotkey buttons are lit when a view has the key, hi
     rig.controller.goToView(a);
     UiModel model(rig.controller);
     const auto& q = model.hotkeyButtons();
-    REQUIRE(q.size() == 9);
+    REQUIRE(q.size() == 10);
+    CHECK(q[9].hotkey == mykam::kHotkeyZero);
+    CHECK(q[9].tooltip == "Key 0 (free)");
     CHECK_FALSE(q[0].assigned);
     CHECK(q[0].tooltip == "Key 1 (free)");
     CHECK(q[0].viewId == 0);
@@ -1566,4 +1568,18 @@ TEST_CASE("quick bar views: a saved mykam.ini decides the buttons at start, unkn
     UiModel model(controller);
     CHECK(buttonNames(model) == Names({"circle", "wingman"}));
     CHECK(sim.logCount("quick_bar_views") == 1);  // one warning line for the unknown name
+}
+
+TEST_CASE("ui model: the quick bar is hidden while MyKam is off and the header says so") {
+    Rig rig;
+    UiModel model(rig.controller);
+    const bool shownBefore = model.quickBarVisible();
+    CHECK(model.active());
+    model.toggleActive();
+    CHECK_FALSE(model.active());
+    CHECK_FALSE(model.quickBarVisible());
+    model.refresh();
+    CHECK(model.headerState() == "MyKam is off");
+    model.toggleActive();
+    CHECK(model.quickBarVisible() == shownBefore);
 }

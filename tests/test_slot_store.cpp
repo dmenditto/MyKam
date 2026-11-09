@@ -228,11 +228,13 @@ TEST_CASE("view store: a hotkey is unique per aircraft; assigning one that is us
     CHECK(s.find(b)->hotkey == 0);
     CHECK_FALSE(s.has(5));
 
-    CHECK_FALSE(s.setHotkey(b, 10));
+    CHECK_FALSE(s.setHotkey(b, 11));
     CHECK_FALSE(s.setHotkey(b, -1));
     CHECK_FALSE(s.setHotkey(99, 1));  // unknown view
     CHECK(s.hotkeyOwner(0) == 0);
-    CHECK(s.hotkeyOwner(10) == 0);
+    CHECK(s.hotkeyOwner(11) == 0);
+    CHECK(s.setHotkey(b, mykam::kHotkeyZero));  // numpad 0
+    CHECK(s.hotkeyOwner(mykam::kHotkeyZero) == b);
 }
 
 TEST_CASE("view store: adding a view with a used hotkey takes the key away from the other view") {
@@ -257,9 +259,24 @@ TEST_CASE("view store: the hotkey round trips and a duplicate in a file is ignor
     CHECK(s.find(3)->hotkey == 7);
     CHECK(s.find(4)->hotkey == 0);
     CHECK(s.find(5)->hotkey == 0);
-    CHECK(s.find(6)->hotkey == 0);
+    CHECK(s.find(6)->hotkey == mykam::kHotkeyZero);  // 0 in the file is numpad 0
     CHECK(r.problems.size() == 3);  // the duplicate, 10 and x
     CHECK(s.hotkeyOwner(4) == 1);
+    CHECK(s.hotkeyOwner(mykam::kHotkeyZero) == 6);
+}
+
+TEST_CASE("view store: numpad 0 is stored as hotkey=0 and read back") {
+    ViewStore s;
+    const int id = s.add(somePose(), ViewKind::External, std::string(), mykam::kHotkeyZero);
+    REQUIRE(id != 0);
+    CHECK(s.find(id)->hotkey == mykam::kHotkeyZero);
+    const std::string text = s.serialize();
+    CHECK(text.find("view" + std::to_string(id) + ".hotkey=0\n") != std::string::npos);
+    ViewStore back;
+    back.parse(text);
+    CHECK(back.find(id)->hotkey == mykam::kHotkeyZero);
+    CHECK(mykam::hotkeyText(mykam::kHotkeyZero) == "0");
+    CHECK(mykam::hotkeyText(7) == "7");
 }
 
 // ---------------------------------------------------------------- names, defaults, order

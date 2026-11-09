@@ -137,7 +137,7 @@ view2.label=BT
 view2.key=vk:87,flags:shift+ctrl
 ```
 
-(The lines of view 1 would also carry `view1.order=1`.) `viewID.view`, `viewID.favourite`, `viewID.hotkey`, `viewID.label` and `viewID.key` are optional; `viewID.order` is written for every view. The id is a whole number that is never reused in a file (`next_id` remembers the next one even after deletes). A hotkey is 1 to 9 and belongs to one view only.
+(The lines of view 1 would also carry `view1.order=1`.) `viewID.view`, `viewID.favourite`, `viewID.hotkey`, `viewID.label` and `viewID.key` are optional; `viewID.order` is written for every view. The id is a whole number that is never reused in a file (`next_id` remembers the next one even after deletes). A hotkey is 0 to 9 (numpad 0 is stored as `hotkey=0`) and belongs to one view only.
 
 - `label`: 1 or 2 characters, letters A to Z (stored uppercase) or digits. A bad label is ignored and the view still loads.
 - `key`: `vk:<virtual key code>,flags:<modifiers>`. The code is X-Plane's virtual key code (87 is W, see `XPLMDefs.h`). The modifiers are `shift`, `ctrl` and `alt` joined with `+` (in that order when written), or `none`. The same combination can belong to one view only; a duplicate or invalid key is ignored and the view still loads. Escape (27), Backspace (8) and the plain modifier codes cannot be used.
@@ -149,12 +149,13 @@ view2.key=vk:87,flags:shift+ctrl
 
 | Command | Does |
 |---------|------|
-| `mykam/go_slot_N` (N = 1 to 9) | go to the view that has key N (none: one log line `slot N is empty`) |
-| `mykam/save_slot_N` (N = 1 to 9) | save the current view into the view that has key N (name and favourite stay), or create a new view with key N when none has it. Refused in circle, tower and the other no-save views. |
+| `mykam/go_slot_N` (N = 0 to 9) | go to the view that has key N (none: one log line `slot N is empty`) |
+| `mykam/save_slot_N` (N = 0 to 9) | save the current view into the view that has key N (name and favourite stay), or create a new view with key N when none has it. Refused in circle, tower and the other no-save views. |
 | `mykam/next` | go to the next view in group order (Internal, then External, each in the order you set), wraps |
 | `mykam/previous` | go to the previous view in the same order |
 | `mykam/release` | give the camera back to X-Plane |
-| `mykam/toggle_window` | show or hide the main window |
+| `mykam/toggle_window` | show or hide the main window (showing it also turns MyKam on) |
+| `mykam/toggle_active` | turn MyKam off (camera back to X-Plane, window and quick bar hidden, custom keys freed, go and save ignored with one log line) or on again; also Plugins > MyKam > MyKam on |
 | `mykam/toggle_group` | switch the quick bar between the Internal and External lists, like clicking the other segment (holds until the kind of view changes) |
 
 Bind keys to the `mykam/` command names.

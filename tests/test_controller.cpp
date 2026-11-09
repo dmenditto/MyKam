@@ -134,9 +134,9 @@ TEST_CASE("controller: an empty slot does nothing and logs one line (FR2.2)") {
 
     rig.sim.logs.clear();
     rig.controller.goToSlot(0);   // not a slot
-    rig.controller.goToSlot(10);  // not a slot
+    rig.controller.goToSlot(11);  // not a slot (10 is numpad 0)
     rig.controller.saveSlot(0);
-    rig.controller.saveSlot(10);
+    rig.controller.saveSlot(11);
     CHECK(rig.sim.logs.empty());
     CHECK(rig.sim.writeFileCalls == 0);
 }
@@ -1049,4 +1049,75 @@ TEST_CASE("aircraft folder: folderOfPath splits Windows and forward-slash paths"
     CHECK(mykam::folderOfPath("Aircraft/A320/a320.acf") == "Aircraft/A320");
     CHECK(mykam::folderOfPath("a320.acf").empty());
     CHECK(mykam::folderOfPath("").empty());
+}
+
+TEST_CASE("controller: numpad 0 (hotkey 10) saves and goes like the other keys") {
+    Rig rig("0");
+    rig.sim.aircraft = makeAircraft(0, 0, 0, 0, 0, 0);
+    rig.sim.view = makePose(10.0, 2.0, 3.0, 0, 0, 0, 1.0);
+    rig.controller.saveSlot(mykam::kHotkeyZero);
+    CHECK(rig.sim.logCount("saved camera to slot 0") == 1);
+    CHECK(rig.controller.slots().has(mykam::kHotkeyZero));
+    rig.controller.goToSlot(mykam::kHotkeyZero);
+    CHECK(rig.controller.state() == CameraState::Holding);
+    rig.controller.release();
+    rig.controller.goToSlot(11);  // out of range: ignored
+    CHECK(rig.controller.state() == CameraState::Idle);
+}
+
+TEST_CASE("controller: turned off, MyKam gives the camera back and ignores go, save, next and previous") {
+    Rig rig("0");
+    rig.sim.aircraft = makeAircraft(0, 0, 0, 0, 0, 0);
+    rig.sim.view = makePose(10.0, 2.0, 3.0, 0, 0, 0, 1.0);
+    rig.controller.saveSlot(1);
+    rig.controller.goToSlot(1);
+    REQUIRE(rig.controller.state() == CameraState::Holding);
+    CHECK(rig.controller.active());
+
+    const unsigned before = rig.controller.revision();
+    rig.controller.toggleActive();
+    CHECK_FALSE(rig.controller.active());
+    CHECK(rig.controller.revision() > before);
+    CHECK(rig.controller.state() == CameraState::Idle);
+    CHECK(rig.sim.releaseCalls >= 1);
+    CHECK(rig.controller.stateText() == "MyKam is off");
+    CHECK(rig.sim.logCount("turned off") == 1);
+
+    const int writes = rig.sim.writeFileCalls;
+    rig.controller.goToSlot(1);
+    rig.controller.next();
+    rig.controller.previous();
+    rig.controller.saveSlot(2);
+    CHECK(rig.controller.saveCurrentAsNew() == 0);
+    CHECK(rig.controller.state() == CameraState::Idle);
+    CHECK(rig.sim.writeFileCalls == writes);
+    CHECK(rig.sim.logCount("MyKam is off") == 5);
+
+    rig.controller.setActive(true);
+    CHECK(rig.controller.active());
+    CHECK(rig.sim.logCount("turned on") == 1);
+    rig.controller.goToSlot(1);
+    CHECK(rig.controller.state() == CameraState::Holding);
+}
+
+TEST_CASE("controller: custom keys are dropped while MyKam is off and come back when it is on") {
+    Rig rig("0");
+    rig.sim.aircraft = makeAircraft(0, 0, 0, 0, 0, 0);
+    rig.sim.view = makePose(10.0, 2.0, 3.0, 0, 0, 0, 1.0);
+    const int id = rig.controller.saveCurrentAsNew();
+    REQUIRE(id != 0);
+    int calls = 0;
+    rig.controller.setOnKeysChanged([&calls]() { ++calls; });
+    mykam::CustomKey key;
+    key.vkey = 0x57;  // W
+    key.flags = mykam::kKeyCtrl;
+    REQUIRE(rig.controller.setViewKey(id, key));
+    CHECK(rig.controller.wantedKeys().size() == 1);
+    const int afterKey = calls;
+    rig.controller.setActive(false);
+    CHECK(rig.controller.wantedKeys().empty());
+    CHECK(calls == afterKey + 1);
+    rig.controller.setActive(true);
+    CHECK(rig.controller.wantedKeys().size() == 1);
+    CHECK(calls == afterKey + 2);
 }

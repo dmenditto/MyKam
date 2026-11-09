@@ -63,6 +63,12 @@ foreach ($doc in 'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'CHANGELOG.md
     Copy-Item (Join-Path $root $doc) (Join-Path $package $doc)
 }
 
+# SkunkCrafts Updater support (https://updater.skunkcrafts.com/): the configuration that lets the
+# updater find this install and the depot it follows, and the changelog in the updater's format.
+. (Join-Path $PSScriptRoot 'skunkcrafts.ps1')
+Write-SkunkcraftsConfig -Path (Join-Path $package $SkunkcraftsConfigName) -Version $version
+Write-SkunkcraftsChangelog -MarkdownPath (Join-Path $root 'CHANGELOG.md') -Path (Join-Path $package 'changelog.txt') -Version $version
+
 $licences = @{
     'third_party\XPSDK\license.txt'             = 'X-Plane-SDK-license.txt'
     'third_party\imgui\LICENSE.txt'             = 'Dear-ImGui-LICENSE.txt'

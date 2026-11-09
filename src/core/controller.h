@@ -33,7 +33,7 @@ enum class ViewSide { Cockpit, Outside };
 // Outcome of applying settings. `NotSaved`: the setting is active but mykam.ini could not be written.
 enum class ApplyResult { Saved, NotSaved, Invalid };
 
-// Everything the edit dialog changes in one go. `numpad` is 0 (none) or 1..9; `key` is unset or a valid
+// Everything the edit dialog changes in one go. `numpad` is 0 (none) or 1..10 (10 = numpad 0); `key` is unset or a valid
 // custom key.
 struct ViewEdit {
     std::string name;
@@ -65,7 +65,7 @@ public:
     // The file the views of the current aircraft are written to.
     std::string viewFilePath() const { return slotFilePath(); }
 
-    // The hotkey commands (FR2.1, FR2.2, FR2.3); `hotkey` is 1 to 9, anything else is ignored.
+    // The hotkey commands (FR2.1, FR2.2, FR2.3); `hotkey` is 1 to 10 (10 = numpad 0), anything else is ignored.
     // go_slot_N goes to the view that has hotkey N (nothing: logs one line). save_slot_N saves the
     // current view into the view that has hotkey N (its name, favourite and hotkey stay), or creates a
     // new view with hotkey N when none has it.
@@ -118,7 +118,15 @@ public:
     // wanted keys changed: after loading an aircraft, a key edit, a rename, a delete. Setting it forgets the
     // keys reported so far, so the first change reports everything again.
     void setOnKeysChanged(std::function<void()> callback);
-    std::vector<WantedKey> wantedKeys() const { return slots_.wantedKeys(); }
+    // Empty while MyKam is off.
+    std::vector<WantedKey> wantedKeys() const;
+
+    // On / off (mykam/toggle_active). Off gives the camera back to X-Plane, drops the custom keys and
+    // ignores every go, save, next and previous (one log line each) until it is turned on again. Starts on;
+    // not stored.
+    bool active() const { return active_; }
+    void setActive(bool active);
+    void toggleActive() { setActive(!active_); }
     // Go to the next / previous view in group order (Internal, then External; favourites first), wrapping
     // round. Without an active view, next gives the first and previous the last.
     void next();
@@ -228,6 +236,7 @@ private:
     bool handoffArmed_ = false;    // an outside slot was chosen and the hand-over has not been requested yet
     bool handoffPending_ = false;  // requested; performHandoff does it on the next frame
     bool ownCommand_ = false;      // mykam itself is running a view command right now
+    bool active_ = true;           // false while the user turned MyKam off
     std::string lastView_;         // last tracked view command the user ran, empty if none yet
     int heldView_ = 0;
     int activeView_ = 0;

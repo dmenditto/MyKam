@@ -25,7 +25,7 @@ namespace {
 namespace w = widgets;
 using theme::fonts;
 
-const char* const kDigits[kHotkeyCount] = {"1", "2", "3", "4", "5", "6", "7", "8", "9"};
+const char* const kDigits[kHotkeyCount] = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};  // index hotkey - 1
 const char* const kDragPayload = "MYKAM_VIEW";  // the id of the view being dragged inside its list or the bar
 const char* const kDot = "\xC2\xB7";  // U+00B7 middle dot
 
@@ -1216,7 +1216,8 @@ void MainWindow::drawEditDialog() {
         }
     }
     if (draft_.keyMode == KeyMode::Numpad) {
-        const int layout[kHotkeyCount] = {7, 8, 9, 4, 5, 6, 1, 2, 3};  // like the numeric keypad
+        // Like the numeric keypad: 7 8 9 / 4 5 6 / 1 2 3 / a wide 0 under 1 and 2.
+        const int layout[kHotkeyCount] = {7, 8, 9, 4, 5, 6, 1, 2, 3, kHotkeyZero};
         const float spacing = ImGui::GetStyle().ItemSpacing.x;
         const float cell = (ImGui::GetContentRegionAvail().x - 2.0f * spacing) / 3.0f;
         for (int i = 0; i < kHotkeyCount; ++i) {
@@ -1224,12 +1225,13 @@ void MainWindow::drawEditDialog() {
             if (i % 3 != 0) {
                 ImGui::SameLine();
             }
+            const float width = n == kHotkeyZero ? 2.0f * cell + spacing : cell;
             const std::string owner = model_.keyOwnerName(n, editView_);
             const std::string text = w::ellipsize(f.body, owner.empty() ? std::string(kDigits[n - 1])
                                                                         : std::string(kDigits[n - 1]) + " " + owner,
-                                                  cell - 24.0f);
+                                                  width - 24.0f);
             ImGui::PushID(n);
-            if (w::pillButton("##np", text.c_str(), nullptr, ImVec2(cell, kButtonH),
+            if (w::pillButton("##np", text.c_str(), nullptr, ImVec2(width, kButtonH),
                               draft_.numpad == n ? w::PillStyle::Filled : w::PillStyle::Outline)) {
                 draft_.numpad = n;
             }
@@ -1767,6 +1769,8 @@ bool UiWindows::create(UiModel& model) {
         if (menu_ != nullptr) {
             XPLMAppendMenuItem(menu_, "Show window", reinterpret_cast<void*>(static_cast<std::intptr_t>(1)), 1);
             XPLMAppendMenuItem(menu_, "Hide window", reinterpret_cast<void*>(static_cast<std::intptr_t>(2)), 1);
+            activeItem_ = XPLMAppendMenuItem(menu_, "MyKam on", reinterpret_cast<void*>(static_cast<std::intptr_t>(3)), 1);
+            syncActiveMenu();
         }
     }
     return true;
@@ -1782,6 +1786,7 @@ void UiWindows::destroy() {
     }
     pluginsMenu_ = nullptr;
     menuItem_ = -1;
+    activeItem_ = -1;
     if (bar_) {
         bar_->destroy();
         bar_.reset();
@@ -1804,7 +1809,30 @@ void UiWindows::toggleMainWindow() {
     }
 }
 
+void UiWindows::toggleActive() {
+    if (model_ == nullptr) {
+        return;
+    }
+    model_->toggleActive();
+    if (!model_->active()) {
+        hideMainWindow();
+    }
+    syncQuickBar();
+    syncActiveMenu();
+}
+
+void UiWindows::syncActiveMenu() {
+    if (menu_ != nullptr && activeItem_ >= 0 && model_ != nullptr) {
+        XPLMCheckMenuItem(menu_, activeItem_, model_->active() ? xplm_Menu_Checked : xplm_Menu_Unchecked);
+    }
+}
+
 void UiWindows::showMainWindow() {
+    if (model_ != nullptr && !model_->active()) {
+        model_->toggleActive();  // asking for the window turns MyKam back on
+        syncQuickBar();
+        syncActiveMenu();
+    }
     if (main_) {
         main_->setVisible(true);
         main_->bringToFront();
@@ -1853,10 +1881,13 @@ void UiWindows::menuHandler(void* menuRef, void* itemRef) {
         return;
     }
     try {
-        if (reinterpret_cast<std::intptr_t>(itemRef) == 1) {
+        const std::intptr_t item = reinterpret_cast<std::intptr_t>(itemRef);
+        if (item == 1) {
             self->showMainWindow();
-        } else {
+        } else if (item == 2) {
             self->hideMainWindow();
+        } else if (item == 3) {
+            self->toggleActive();
         }
     } catch (...) {
     }

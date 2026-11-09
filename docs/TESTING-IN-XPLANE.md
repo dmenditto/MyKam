@@ -25,7 +25,7 @@ use any free keys in your own X-Plane keyboard settings.
 
 ### 0.3 Bind the MyKam commands
 1. Open Settings (the gear icon at the top) and go to the **Keyboard** tab.
-2. In the search box type `mykam`. You should see 23 commands.
+2. In the search box type `mykam`. You should see 26 commands.
 3. For each command below, click the box on its right, press the key combination, and confirm:
 
 | Command | Suggested key |
@@ -34,7 +34,7 @@ use any free keys in your own X-Plane keyboard settings.
 | `mykam/go_slot_1` ... `mykam/go_slot_9` | **Alt + 1** ... **Alt + 9** |
 | `mykam/release` | **Alt + 0** |
 
-The other commands are `mykam/toggle_window`, `mykam/next`, `mykam/previous` and `mykam/toggle_group`.
+The other commands are `mykam/toggle_window`, `mykam/toggle_active`, `mykam/next`, `mykam/previous` and `mykam/toggle_group`.
 
 4. Close Settings.
 
@@ -74,7 +74,7 @@ Result:
 ## IT-02 Commands exist
 1. Settings > **Keyboard**, search `mykam`.
 
-Pass when: 23 commands are listed (save 1-9, go 1-9, release, toggle_window, next, previous, toggle_group), all starting with `mykam/`.
+Pass when: 26 commands are listed (save 0-9, go 0-9, release, toggle_window, toggle_active, next, previous, toggle_group), all starting with `mykam/`.
 
 Result:
 

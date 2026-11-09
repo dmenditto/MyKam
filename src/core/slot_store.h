@@ -9,13 +9,18 @@
 // body frame, with a validated text format (FR5, NFR2.5, NFR2.6, NFR2.7). Pure code, no X-Plane calls.
 //
 // A view has a stable id (never reused within a file), a name, a kind, a pose, an optional X-Plane view
-// command, a favourite flag and an optional hotkey 1..9 (unique per aircraft). The hotkey is what the
-// commands mykam/go_slot_N and mykam/save_slot_N address; a view without one is reached from the window.
+// command, a favourite flag and an optional hotkey 1..10 (unique per aircraft), where 10 is numpad 0.
+// The hotkey is what the commands mykam/go_slot_N and mykam/save_slot_N address (N is the key's digit,
+// 0 for hotkey 10); a view without one is reached from the window.
 
 namespace mykam {
 
 constexpr int kMaxViews = 99;                          // saved views per aircraft
-constexpr int kHotkeyCount = 9;                        // hotkeys 1..9
+constexpr int kHotkeyCount = 10;                       // hotkeys 1..9, and 10 for numpad 0
+constexpr int kHotkeyZero = 10;                        // the hotkey of numpad 0 (0 itself means "no key")
+// The digit a hotkey is pressed with: 1..9, and 0 for kHotkeyZero.
+constexpr int hotkeyDigit(int hotkey) { return hotkey == kHotkeyZero ? 0 : hotkey; }
+inline std::string hotkeyText(int hotkey) { return std::to_string(hotkeyDigit(hotkey)); }
 constexpr int kMaxViewId = 999999;                     // ids stay small so the file text stays small
 constexpr std::size_t kMaxSlotFileBytes = 64 * 1024;  // NFR2.6
 // The per-aircraft view file, kept in the aircraft's own folder next to its .acf.
@@ -86,7 +91,7 @@ struct SavedView {
     Pose pose;
     std::string viewCommand;  // optional X-Plane view command, external views only
     bool favourite = false;   // shown in the quick bar
-    int hotkey = 0;           // 0 = none, else 1..9 (numpad commands)
+    int hotkey = 0;           // 0 = none, else 1..10 (numpad commands; 10 = numpad 0)
     std::string label;        // quick bar label, "" or 1 to 2 characters A-Z / 0-9
     CustomKey key;            // optional custom key combination
     int order = 0;            // position inside its group (1 = first), see ViewStore::ordered

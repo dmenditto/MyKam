@@ -16,7 +16,7 @@ std::string UiModel::hintFor(const std::string& pattern, int hotkey) {
     std::string out;
     for (std::size_t i = 0; i < pattern.size(); ++i) {
         if (pattern.compare(i, 3, "{n}") == 0) {
-            out += std::to_string(hotkey);
+            out += hotkeyText(hotkey);
             i += 2;
         } else {
             out.push_back(pattern[i]);
@@ -79,7 +79,7 @@ void UiModel::refresh() {
         button.hotkey = n;
         const SavedView* view = store.find(store.hotkeyOwner(n));
         if (view == nullptr) {
-            button.tooltip = "Key " + std::to_string(n) + " (free)";
+            button.tooltip = "Key " + hotkeyText(n) + " (free)";
             continue;
         }
         button.viewId = view->id;
@@ -200,7 +200,7 @@ EditCheck UiModel::checkEdit(const EditDraft& draft) const {
         case LabelCheck::BadCharacter: check.label = "Use letters A to Z or digits only."; break;
     }
     if (draft.keyMode == KeyMode::Numpad && (draft.numpad < 1 || draft.numpad > kHotkeyCount)) {
-        check.key = "Pick a numpad slot from 1 to 9.";
+        check.key = "Pick a numpad slot from 0 to 9.";
     } else if (draft.keyMode == KeyMode::Custom && !isValidKey(draft.custom)) {
         check.key = "Press the key you want to use.";
     }

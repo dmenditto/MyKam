@@ -8,7 +8,7 @@ MyKam is a plugin for X-Plane 12 on Windows. Save the view you are looking at, i
 aircraft, and come back to it with one key or one click. Switching glides from where the camera is to the
 saved view with an eased move instead of a cut.
 
-**Status: beta (0.9.0-beta).** It has had little testing outside the developer's own setup. See
+**Status: beta (0.9.1-beta).** It has had little testing outside the developer's own setup. See
 [Known limitations](#beta-status-and-known-limitations).
 
 ## What it does
@@ -24,7 +24,8 @@ saved view with an eased move instead of a cut.
 - **Quick bar.** A slim bar on the screen with the starred views of the shown group, a switch between the groups,
   buttons for X-Plane's own views, Release and Menu.
 - **Labels.** One or two letters or digits on a view's chip in the quick bar.
-- **Custom keys.** Give a view any key (with Shift, Ctrl and Alt) or one of the numpad slots 1 to 9.
+- **Custom keys.** Give a view any key (with Shift, Ctrl and Alt) or one of the numpad slots 0 to 9.
+- **On / off.** One key (`mykam/toggle_active`) turns MyKam off completely and back on.
 - **X-Plane view buttons.** Cockpit, free camera, chase, circle, tower, runway, linear spot, still spot,
   ride-along and wingman, in the window and on the quick bar.
 - **Mouse and keys while MyKam holds an outside camera.** Right-drag orbits the aircraft, the wheel moves closer
@@ -44,14 +45,22 @@ buttons, release and the menu:
 ## Install
 
 1. Quit X-Plane 12.
-2. Download `MyKam-0.9.0-beta-win64.zip` from the Releases page and unzip it.
+2. Download `MyKam-0.9.1-beta-win64.zip` from the Releases page and unzip it.
 3. Copy the `MyKam` folder into `<X-Plane 12>\Resources\plugins\`. You should end up with:
    - `Resources\plugins\MyKam\win_x64\MyKam.xpl`
    - `Resources\plugins\MyKam\mykam.ini`
    - `Resources\plugins\MyKam\fonts\`
+   - `Resources\plugins\MyKam\skunkcrafts_updater.cfg`
 4. Start X-Plane 12. Open **Plugins > Plugin Admin** and check that **MyKam** is listed and enabled.
 
 If you use another camera plugin, disable it while you try MyKam.
+
+### Updates
+
+MyKam can be kept up to date with [SkunkCrafts Updater](https://updater.skunkcrafts.com/). Install the updater
+once, run it with X-Plane closed, and MyKam appears in its list (it finds `skunkcrafts_updater.cfg` in the MyKam
+folder). It downloads only the files that changed. Your `mykam.ini` and your saved views are never replaced.
+You can also update by hand: download the new zip and copy the `MyKam` folder over the old one.
 
 ## First steps
 
@@ -69,7 +78,7 @@ The complete guide to the window and the quick bar is in [docs/UI-GUIDE.md](docs
 ## Key binding
 
 MyKam registers X-Plane commands. Bind them in X-Plane under **Settings > Keyboard** (type `mykam` in the search box).
-Suggested keys: go to a view on Numpad 1 to 9, save on Ctrl + Alt + Numpad 1 to 9, release on Numpad 0.
+Suggested keys: go to a view on Numpad 0 to 9, save on Ctrl + Alt + Numpad 0 to 9, turn MyKam on and off on Numpad . (decimal point).
 A view can also have its own **custom key** in its edit dialog; MyKam registers that key with X-Plane itself.
 
 The slot cards in the window show key hints taken from `key_hint_go` and `key_hint_save` in `mykam.ini`. They are
@@ -79,10 +88,11 @@ only labels. The real keys are the ones you bind in X-Plane.
 
 | Command | What it does |
 |---------|--------------|
-| `mykam/go_slot_1` ... `mykam/go_slot_9` | Go to the view that has numpad slot N. |
-| `mykam/save_slot_1` ... `mykam/save_slot_9` | Save the current view into the view that has slot N, or create one. |
+| `mykam/go_slot_0` ... `mykam/go_slot_9` | Go to the view that has numpad slot N. |
+| `mykam/save_slot_0` ... `mykam/save_slot_9` | Save the current view into the view that has slot N, or create one. |
 | `mykam/release` | Give the camera back to X-Plane. |
-| `mykam/toggle_window` | Show or hide the MyKam window. |
+| `mykam/toggle_active` | Turn MyKam on or off. Off gives the camera back to X-Plane, hides the window and the quick bar, frees the custom keys and ignores every go and save until it is turned on again (also Plugins > MyKam > MyKam on). |
+| `mykam/toggle_window` | Show or hide the MyKam window (showing it also turns MyKam on). |
 | `mykam/next` | Go to the next saved view (Internal, then External). |
 | `mykam/previous` | Go to the previous saved view. |
 | `mykam/toggle_group` | Switch the quick bar between the Internal and External lists. |
@@ -126,7 +136,13 @@ Build, test and make the release zip in one go:
 powershell -ExecutionPolicy Bypass -File tools\package.ps1
 ```
 
-This creates `dist\MyKam-0.9.0-beta-win64.zip` and stops if the build or any test fails.
+This creates `dist\MyKam-0.9.1-beta-win64.zip` and stops if the build or any test fails.
+
+To publish that version for SkunkCrafts Updater users, commit the release and run
+`tools\publish-depot.ps1 -Push`. It builds the depot (every file of the zip's `MyKam` folder plus the CRC32
+and size lists) and pushes it to the `gh-pages` branch, served by GitHub Pages at
+`https://dmenditto.github.io/MyKam/updater/MyKam`. Without `-Push` it only builds `dist\depot` to look at.
+`deploy.ps1` never copies `skunkcrafts_updater.cfg`, so the updater leaves a development install alone.
 
 To copy a build into your X-Plane while developing, run `deploy.ps1 -XPlanePath "<your X-Plane 12 folder>"`
 (or set the `XPLANE12_PATH` environment variable). Quit X-Plane first. See [CONTRIBUTING.md](CONTRIBUTING.md).

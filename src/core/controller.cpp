@@ -235,7 +235,11 @@ void Controller::saveSlot(int hotkey) {
     if (hotkey < 1 || hotkey > kHotkeyCount) {
         return;
     }
-    const std::string what = "slot " + std::to_string(hotkey);
+    const std::string what = "slot " + hotkeyText(hotkey);
+    if (!active_) {
+        log("MyKam is off, " + what + " not saved");
+        return;
+    }
     const int owner = slots_.hotkeyOwner(hotkey);
     if (owner == 0 && slots_.full()) {
         log(what + " not saved: the limit of " + std::to_string(kMaxViews) + " saved views is reached");
@@ -259,6 +263,10 @@ void Controller::saveSlot(int hotkey) {
 }
 
 int Controller::saveCurrentAsNew(bool favourite) {
+    if (!active_) {
+        log("MyKam is off, view not saved");
+        return 0;
+    }
     if (slots_.full()) {
         log("view not saved: the limit of " + std::to_string(kMaxViews) + " saved views is reached");
         return 0;
@@ -284,6 +292,10 @@ int Controller::saveCurrentAsNew(bool favourite) {
 bool Controller::replaceView(int id) {
     const SavedView* view = slots_.find(id);
     if (view == nullptr) {
+        return false;
+    }
+    if (!active_) {
+        log("MyKam is off, " + viewLabel(slots_, id) + " not replaced");
         return false;
     }
     const ViewGroup group = groupOf(view->kind);
@@ -355,8 +367,26 @@ void Controller::setOnKeysChanged(std::function<void()> callback) {
     reportedKeys_.clear();
 }
 
+std::vector<WantedKey> Controller::wantedKeys() const {
+    // While MyKam is off its custom keys are given back, so X-Plane sees those keys again.
+    return active_ ? slots_.wantedKeys() : std::vector<WantedKey>();
+}
+
+void Controller::setActive(bool active) {
+    if (active == active_) {
+        return;
+    }
+    if (!active) {
+        releaseIfHeld();  // X-Plane gets the camera back, and nothing of ours keeps running
+    }
+    active_ = active;
+    touch();
+    notifyKeys();
+    log(active ? "turned on" : "turned off, X-Plane has the camera");
+}
+
 void Controller::notifyKeys() {
-    const std::vector<WantedKey> wanted = slots_.wantedKeys();
+    const std::vector<WantedKey> wanted = wantedKeys();
     if (wanted == reportedKeys_) {
         return;
     }
@@ -388,7 +418,7 @@ std::string Controller::viewKeyText(const SavedView& view) {
     if (view.key.set()) {
         return keyText(view.key);
     }
-    return view.hotkey != 0 ? "Num " + std::to_string(view.hotkey) : std::string();
+    return view.hotkey != 0 ? "Num " + hotkeyText(view.hotkey) : std::string();
 }
 
 bool Controller::setLabel(int id, const std::string& label) {
@@ -521,12 +551,16 @@ bool Controller::setHotkey(int id, int hotkey) {
         slots_.setHotkey(id, hotkey);
         touch();
         persistSlots(hotkey == 0 ? "key removed from " + viewLabel(slots_, id)
-                                 : "key " + std::to_string(hotkey) + " assigned to " + viewLabel(slots_, id));
+                                 : "key " + hotkeyText(hotkey) + " assigned to " + viewLabel(slots_, id));
     }
     return true;
 }
 
 void Controller::step(int direction) {
+    if (!active_) {
+        log(std::string("MyKam is off, ") + (direction > 0 ? "next" : "previous") + " ignored");
+        return;
+    }
     const int target = stepView(slots_, activeView_, direction);
     if (target == 0) {
         log("no saved cameras to step through");
@@ -582,6 +616,9 @@ ApplyResult Controller::applySettings(const Config& wanted) {
 }
 
 std::string Controller::stateText() const {
+    if (!active_) {
+        return "MyKam is off";
+    }
     const SavedView* view = activeView_ != 0 ? slots_.find(activeView_) : nullptr;
     if (view != nullptr) {
         return view->name + " - " + viewTypeLabel(*view);
@@ -596,9 +633,13 @@ void Controller::goToSlot(int hotkey) {
     if (hotkey < 1 || hotkey > kHotkeyCount) {
         return;
     }
+    if (!active_) {
+        log("MyKam is off, go to slot " + hotkeyText(hotkey) + " ignored");
+        return;
+    }
     const int id = slots_.hotkeyOwner(hotkey);
     if (id == 0) {
-        log("slot " + std::to_string(hotkey) + " is empty");
+        log("slot " + hotkeyText(hotkey) + " is empty");
         return;
     }
     goToView(id);
@@ -607,6 +648,10 @@ void Controller::goToSlot(int hotkey) {
 void Controller::goToView(int id) {
     const SavedView* view = slots_.find(id);
     if (view == nullptr) {
+        return;
+    }
+    if (!active_) {
+        log("MyKam is off, go to " + viewLabel(slots_, id) + " ignored");
         return;
     }
     const Pose target = view->pose;

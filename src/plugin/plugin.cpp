@@ -26,7 +26,8 @@ enum Action : std::intptr_t {
     kToggleWindow = 301,
     kNext = 302,
     kPrevious = 303,
-    kToggleGroup = 304
+    kToggleGroup = 304,
+    kToggleActive = 305
 };
 
 struct Plugin {
@@ -34,7 +35,7 @@ struct Plugin {
     std::unique_ptr<mykam::Controller> controller;
     std::unique_ptr<mykam::UiModel> uiModel;      // exists while the plugin is enabled
     std::unique_ptr<mykam::UiWindows> uiWindows;  // main window, quick bar and menu
-    static constexpr int kMaxCommands = 48;  // room for the 23 commands
+    static constexpr int kMaxCommands = 48;  // room for the 26 commands
     XPLMCommandRef commands[kMaxCommands] = {};
     std::intptr_t actions[kMaxCommands] = {};
     int commandCount = 0;
@@ -109,10 +110,16 @@ int commandHandler(XPLMCommandRef, XPLMCommandPhase phase, void* refcon) {
     }
     try {
         const std::intptr_t action = reinterpret_cast<std::intptr_t>(refcon);
-        if (action >= kSaveBase + 1 && action <= kSaveBase + 9) {
+        if (action >= kSaveBase + 1 && action <= kSaveBase + mykam::kHotkeyCount) {
             p->controller->saveSlot(static_cast<int>(action - kSaveBase));
-        } else if (action >= kGoBase + 1 && action <= kGoBase + 9) {
+        } else if (action >= kGoBase + 1 && action <= kGoBase + mykam::kHotkeyCount) {
             p->controller->goToSlot(static_cast<int>(action - kGoBase));
+        } else if (action == kToggleActive) {
+            if (p->uiWindows) {
+                p->uiWindows->toggleActive();  // also hides or shows the windows
+            } else {
+                p->controller->toggleActive();
+            }
         } else if (action == kRelease) {
             p->controller->release();
         } else if (action == kNext) {
@@ -419,15 +426,18 @@ PLUGIN_API int XPluginEnable(void) {
     try {
         Plugin& p = *g_plugin;
         for (int n = 1; n <= mykam::kHotkeyCount; ++n) {
-            registerCommand(p, "save_slot_" + std::to_string(n),
-                            "Save the current view into the MyKam view that has key " + std::to_string(n) +
+            const std::string digit = mykam::hotkeyText(n);
+            registerCommand(p, mykam::saveSlotBaseName(n),
+                            "Save the current view into the MyKam view that has key " + digit +
                                 " (creates it when none has)",
                             kSaveBase + n);
-            registerCommand(p, "go_slot_" + std::to_string(n),
-                            "Switch to the MyKam view that has key " + std::to_string(n), kGoBase + n);
+            registerCommand(p, mykam::goSlotBaseName(n), "Switch to the MyKam view that has key " + digit,
+                            kGoBase + n);
         }
         registerCommand(p, "release", "Return camera control to X-Plane", kRelease);
         registerCommand(p, "toggle_window", "Show or hide the MyKam window", kToggleWindow);
+        registerCommand(p, "toggle_active", "Turn MyKam on or off (off gives the camera back to X-Plane)",
+                        kToggleActive);
         registerCommand(p, "next", "Switch to the next saved MyKam view (Internal, then External)", kNext);
         registerCommand(p, "previous", "Switch to the previous saved MyKam view (Internal, then External)", kPrevious);
         registerCommand(p, "toggle_group", "Switch the quick bar between the Internal and External view lists",

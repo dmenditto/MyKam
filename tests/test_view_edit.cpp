@@ -689,7 +689,7 @@ TEST_CASE("edit: Save applies every field with one write; a bad field changes no
     bad.label = "abc";
     CHECK(rig.controller.editView(a, bad) == EditResult::BadLabel);
     bad = edit;
-    bad.numpad = 10;
+    bad.numpad = 11;
     CHECK(rig.controller.editView(a, bad) == EditResult::BadNumpad);
     bad = edit;
     bad.key = key(27);
@@ -938,8 +938,10 @@ TEST_CASE("edit dialog: name, label and key are validated and Save is enabled on
     d.numpad = 0;
     CHECK_FALSE(model.checkEdit(d).key.empty());
     CHECK_FALSE(model.canSaveEdit(d));
-    d.numpad = 10;
+    d.numpad = 11;
     CHECK_FALSE(model.canSaveEdit(d));
+    d.numpad = mykam::kHotkeyZero;  // numpad 0
+    CHECK(model.canSaveEdit(d));
     d.numpad = 9;
     CHECK(model.canSaveEdit(d));
 

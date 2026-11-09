@@ -2,6 +2,13 @@
 
 All notable changes to MyKam are listed here. The format follows Keep a Changelog.
 
+## [0.9.1-beta] - 2026
+
+### Added
+- Numpad slot 0: `mykam/go_slot_0` and `mykam/save_slot_0`, and a wide 0 key in the edit dialog's keypad.
+- `mykam/toggle_active` and Plugins > MyKam > MyKam on: turn MyKam off (camera back to X-Plane, window and quick bar hidden, custom keys freed, go and save ignored) and on again.
+- Updates through SkunkCrafts Updater: the MyKam folder carries `skunkcrafts_updater.cfg`, so the updater finds it and keeps it current. Your `mykam.ini` is never replaced.
+
 ## [0.9.0-beta] - 2026
 
 First public beta.

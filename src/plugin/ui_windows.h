@@ -140,6 +140,8 @@ public:
     void destroy();
 
     void toggleMainWindow();
+    // Turn MyKam on or off: off hides the window and the quick bar, on brings the quick bar back.
+    void toggleActive();
     void showMainWindow();
     void hideMainWindow();
     // Show the main window (even when hidden) and open the edit dialog for a view there.
@@ -149,6 +151,7 @@ public:
 
 private:
     static void menuHandler(void* menuRef, void* itemRef);
+    void syncActiveMenu();  // the check mark of the "MyKam on" menu item
 
     UiModel* model_ = nullptr;
     std::unique_ptr<MainWindow> main_;
@@ -156,6 +159,7 @@ private:
     XPLMMenuID pluginsMenu_ = nullptr;
     XPLMMenuID menu_ = nullptr;
     int menuItem_ = -1;
+    int activeItem_ = -1;
 };
 
 }  // namespace mykam
