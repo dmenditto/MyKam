@@ -98,8 +98,13 @@ try {
         gh api repos/dmenditto/MyKam/pages --silent 2>$null
         if ($LASTEXITCODE -ne 0) {
             gh api -X POST repos/dmenditto/MyKam/pages -f 'source[branch]=gh-pages' -f 'source[path]=/' --silent
-            if ($LASTEXITCODE -ne 0) { Write-Warning 'Could not turn GitHub Pages on. Do it in the repository settings: Pages, branch gh-pages, folder /.' }
-            else { Write-Output 'Turned GitHub Pages on for the gh-pages branch.' }
+            if ($LASTEXITCODE -eq 0) {
+                Write-Output 'Turned GitHub Pages on for the gh-pages branch.'
+            } else {
+                # GitHub often turns Pages on by itself when a gh-pages branch is first pushed.
+                gh api repos/dmenditto/MyKam/pages --silent 2>$null
+                if ($LASTEXITCODE -ne 0) { Write-Warning 'Could not turn GitHub Pages on. Do it in the repository settings: Pages, branch gh-pages, folder /.' }
+            }
         }
     } else {
         Write-Warning 'GitHub CLI not found: make sure Pages serves the gh-pages branch (repository settings, Pages).'
