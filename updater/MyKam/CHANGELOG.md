@@ -2,6 +2,13 @@
 
 All notable changes to MyKam are listed here. The format follows Keep a Changelog.
 
+## [0.9.2-beta] - 2026
+
+### Added
+- Warning when X-Camera runs next to MyKam: one line in Log.txt and an amber note in the MyKam window, because X-Camera can move the camera back after MyKam moves it (#1).
+- Per-view XPRealistic choice in the edit dialog, shown while XPRealistic is loaded: Leave as is, On or Off. Off pauses XPRealistic's effects when you go to the view; On resumes them, after a cockpit glide has ended. XPRealistic's master switch stays yours (#7).
+- The window list shows each view's XPRealistic choice as an "XPR on" / "XPR off" chip, and the quick bar has an XPRealistic button (filled while its effects run, soft while paused) that pauses or resumes them with one click (#7).
+
 ## [0.9.1-beta] - 2026
 
 ### Added

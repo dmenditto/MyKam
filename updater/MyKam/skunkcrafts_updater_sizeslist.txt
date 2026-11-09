@@ -1,5 +1,5 @@
-CHANGELOG.md|2118
-changelog.txt|1950
+CHANGELOG.md|2819
+changelog.txt|2628
 fonts/Inter-Regular.ttf|407056
 fonts/Inter-SemiBold.ttf|413976
 fonts/LICENSE-MaterialIcons.txt|11357
@@ -12,6 +12,6 @@ licences/MaterialIcons-LICENSE.txt|11357
 licences/X-Plane-SDK-license.txt|1666
 LICENSE|1075
 mykam.ini|1953
-README.md|9467
+README.md|10129
 THIRD_PARTY_NOTICES.md|4458
-win_x64/MyKam.xpl|1122304
+win_x64/MyKam.xpl|1137152
