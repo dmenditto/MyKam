@@ -105,6 +105,23 @@ public:
         return works;
     }
     void requestHandoffFrame() override { ++handoffFrameRequests; }
+    std::set<std::string> enabledPlugins;          // signatures the test says are loaded and enabled
+    std::vector<std::string> pluginCommandsRun;    // every runPluginCommand name, in order
+    bool pluginCommandsWork = true;
+    std::function<void(const std::string&)> onPluginCommand;  // plays the before-handler X-Plane would call
+    bool runPluginCommand(const std::string& name) override {
+        pluginCommandsRun.push_back(name);
+        if (pluginCommandsWork && onPluginCommand) {
+            onPluginCommand(name);
+        }
+        return pluginCommandsWork;
+    }
+    bool isPluginEnabled(const std::string& signature) override { return enabledPlugins.count(signature) != 0; }
+    std::map<std::string, int> pluginDatarefs;  // other plugins' datarefs that exist, with their value
+    int readPluginDataref(const std::string& name, int missing) override {
+        const auto it = pluginDatarefs.find(name);
+        return it == pluginDatarefs.end() ? missing : it->second;
+    }
     void setMouseCapture(bool on) override {
         mouseCapture = on;
         ++mouseCaptureCalls;

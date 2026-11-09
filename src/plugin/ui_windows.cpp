@@ -378,9 +378,31 @@ void MainWindow::drawContent(ImVec2 pmin, ImVec2 pmax) {
     const float left = pmin.x + theme::kSidebarWidth + theme::kContentPad;
     const float top = pmin.y + theme::kHeaderHeight + 20.0f;
     const float width = std::max(pmax.x - theme::kContentPad - left, 100.0f);
-    const float height = std::max(pmax.y - 16.0f - top - kTitleBlock, 60.0f);
     const ImVec2 titleAt(left, top);
-    const ImVec2 bodyAt(left, top + kTitleBlock);
+    ImVec2 bodyAt(left, top + kTitleBlock);
+    float height = std::max(pmax.y - 16.0f - top - kTitleBlock, 60.0f);
+    // Another camera plugin is running: one amber line above the page (issue #1).
+    const std::string conflict = model_.cameraConflictNote();
+    if (!conflict.empty()) {
+        constexpr float kBannerH = 30.0f;
+        const theme::Fonts& f = fonts();
+        ImDrawList* list = ImGui::GetWindowDrawList();
+        const ImVec2 bmin = bodyAt;
+        const ImVec2 bmax(bodyAt.x + width, bodyAt.y + kBannerH);
+        list->AddRectFilled(bmin, bmax, IM_COL32(0xF5, 0xA6, 0x23, 38), 8.0f);
+        list->AddRect(bmin, bmax, IM_COL32(0xF5, 0xA6, 0x23, 110), 8.0f);
+        const std::string shown = w::ellipsize(f.body, conflict, width - 24.0f);
+        list->AddText(f.body, f.body->FontSize, ImVec2(bmin.x + 12.0f, bmin.y + (kBannerH - f.body->FontSize) * 0.5f),
+                      theme::kAmber, shown.c_str());
+        if (ImGui::IsMouseHoveringRect(bmin, bmax) && w::beginGlassTooltip()) {
+            ImGui::PushTextWrapPos(360.0f);
+            ImGui::TextUnformatted(conflict.c_str());
+            ImGui::PopTextWrapPos();
+            w::endGlassTooltip();
+        }
+        bodyAt.y += kBannerH + 10.0f;
+        height = std::max(height - kBannerH - 10.0f, 60.0f);
+    }
     switch (page_) {
         case Page::Internal:
             drawPageTitle(titleAt, "Internal",
@@ -534,7 +556,12 @@ void MainWindow::drawViewRow(const ViewRow& row, float width) {
     const float chipWidth = w::textChipWidth(row.typeLabel.c_str());
     const float chipX = starX - 6.0f - chipWidth;
     const bool showChip = chipX - 12.0f - nameX >= 70.0f;
-    const float nameRight = showChip ? chipX - 12.0f : starX - 12.0f;
+    // The view's XPRealistic choice, left of the type chip, when it has one and there is room.
+    const char* const xprText = UiModel::xprRowText(row.xpr);
+    const float xprWidth = xprText[0] != '\0' ? w::textChipWidth(xprText) : 0.0f;
+    const float xprX = chipX - 6.0f - xprWidth;
+    const bool showXpr = showChip && xprWidth > 0.0f && xprX - 12.0f - nameX >= 70.0f;
+    const float nameRight = showXpr ? xprX - 12.0f : showChip ? chipX - 12.0f : starX - 12.0f;
 
     const std::string name = w::ellipsize(f.card, row.name, std::max(nameRight - nameX, 20.0f));
     const ImVec2 nameSize = w::textSize(f.card, name.c_str());
@@ -542,6 +569,15 @@ void MainWindow::drawViewRow(const ViewRow& row, float width) {
     if (showChip) {
         w::textChip(list, ImVec2(chipX, pos.y + (kViewRowHeight - 22.0f) * 0.5f), row.typeLabel.c_str(), theme::kCyan,
                     true);
+    }
+    if (showXpr) {
+        const ImVec2 at(xprX, pos.y + (kViewRowHeight - 22.0f) * 0.5f);
+        w::textChip(list, at, xprText, row.xpr == XprMode::On ? theme::kGreen : theme::kAmber, true);
+        if (ImGui::IsMouseHoveringRect(at, ImVec2(at.x + xprWidth, at.y + 22.0f)) && w::beginGlassTooltip()) {
+            ImGui::TextUnformatted(row.xpr == XprMode::On ? "Going to this view resumes XPRealistic's effects"
+                                                          : "Going to this view pauses XPRealistic's effects");
+            w::endGlassTooltip();
+        }
     }
 
     ImGui::SetCursorScreenPos(ImVec2(starX, pos.y + (kViewRowHeight - 26.0f) * 0.5f));
@@ -1307,6 +1343,24 @@ void MainWindow::drawEditDialog() {
     ImGui::SameLine(kDialogPad + contentW - 44.0f, 0.0f);
     w::toggle("##editfav", &draft_.favourite);
 
+    // XPRealistic on arrival, only while XPRealistic is loaded (or the view already has a choice).
+    if (model_.showXprChoice(draft_)) {
+        ImGui::Dummy(ImVec2(1.0f, 6.0f));
+        caption("XPRealistic");
+        const char* const xprLabels[3] = {"Leave as is", "On", "Off"};
+        int xpr = static_cast<int>(draft_.xpr);
+        if (w::segmented("##xpr", xprLabels, 3, &xpr)) {
+            draft_.xpr = static_cast<XprMode>(xpr);
+        }
+        ImGui::PushStyleColor(ImGuiCol_Text, theme::vec4(theme::kMuted));
+        ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + contentW);
+        ImGui::TextUnformatted(model_.xprAvailable()
+                                   ? "Off pauses XPRealistic's effects when you go to this view; On resumes them."
+                                   : "XPRealistic is not running now; the choice is kept for when it is.");
+        ImGui::PopTextWrapPos();
+        ImGui::PopStyleColor();
+    }
+
     // Buttons.
     ImGui::Dummy(ImVec2(1.0f, 8.0f));
     draft_.name = nameBuffer_;
@@ -1487,8 +1541,14 @@ void QuickBarWindow::build() {
     for (std::size_t i = 0; i < xviews.size(); ++i) {
         elements.push_back(BarElement{kBarButton, i == 0 ? kBarSectionGap : kBarGap});
     }
+    // XPRealistic's button, only while it is loaded (issue #7).
+    const bool showXpr = model_.xprAvailable();
+    const std::size_t slotXpr = elements.size();
+    if (showXpr) {
+        elements.push_back(BarElement{kBarButton, xviews.empty() ? kBarSectionGap : kBarGap});
+    }
     const std::size_t slotRelease = elements.size();
-    elements.push_back(BarElement{kBarButton, xviews.empty() ? kBarSectionGap : kBarGap});
+    elements.push_back(BarElement{kBarButton, xviews.empty() && !showXpr ? kBarSectionGap : kBarGap});
     elements.push_back(BarElement{kBarButton, kBarGap});  // the menu button
     elements.push_back(BarElement{0.0f, kBarPad});        // the right padding
     const BarLayout barLayout = layoutBar(elements);
@@ -1687,6 +1747,22 @@ void QuickBarWindow::build() {
         ImGui::PopID();
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip) && w::beginGlassTooltip()) {
             ImGui::Text("X-Plane view: %s", view.label);
+            w::endGlassTooltip();
+        }
+    }
+    if (showXpr) {
+        // Filled green-cyan while XPRealistic's effects run, the soft button while they are paused or off.
+        ImGui::SetCursorScreenPos(ImVec2(slotX(slotXpr), top));
+        ImGui::BeginDisabled(!model_.xprMasterOn());
+        if (w::iconButton("##xpr", theme::kIconXpr, kBarButton,
+                          model_.xprRunning() ? w::IconStyle::Filled : w::IconStyle::Soft)) {
+            model_.toggleXpr();
+        }
+        ImGui::EndDisabled();
+        const std::string tip = model_.xprButtonTooltip();
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_ForTooltip | ImGuiHoveredFlags_AllowWhenDisabled) &&
+            w::beginGlassTooltip()) {
+            ImGui::TextUnformatted(tip.c_str());
             w::endGlassTooltip();
         }
     }

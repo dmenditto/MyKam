@@ -44,6 +44,7 @@ ViewRow UiModel::makeRow(const SavedView& view, int activeId) const {
     }
     row.label = view.label;
     row.customKey = view.key.set();
+    row.xpr = view.xpr;
     row.keyText = controller_.viewKeyText(view);
     return row;
 }
@@ -97,6 +98,32 @@ void UiModel::refresh() {
         activeType_.clear();
     }
     header_ = controller_.stateText();
+}
+
+std::string UiModel::xprButtonTooltip() const {
+    if (!controller_.xprMasterOn()) {
+        return "XPRealistic is switched off (its master switch)";
+    }
+    return controller_.xprFrozen() ? "XPRealistic effects paused - click to resume"
+                                   : "XPRealistic effects on - click to pause";
+}
+
+const char* UiModel::xprRowText(XprMode mode) {
+    switch (mode) {
+        case XprMode::On: return "XPR on";
+        case XprMode::Off: return "XPR off";
+        case XprMode::Keep: break;
+    }
+    return "";
+}
+
+std::string UiModel::cameraConflictNote() const {
+    const std::string& others = controller_.otherCameraPlugins();
+    if (others.empty()) {
+        return std::string();
+    }
+    return others + " is running too and can move the camera back after MyKam moves it. "
+                    "Disable one of them in Plugins > Plugin Admin.";
 }
 
 std::string UiModel::chipName(const std::string& name) {
@@ -174,6 +201,7 @@ EditDraft UiModel::beginEdit(int id) const {
     draft.name = view->name;
     draft.label = view->label;
     draft.favourite = view->favourite;
+    draft.xpr = view->xpr;
     if (view->key.set()) {
         draft.keyMode = KeyMode::Custom;
         draft.custom = view->key;
@@ -225,6 +253,7 @@ EditResult UiModel::saveEdit(const EditDraft& draft) {
     edit.name = draft.name;
     edit.label = draft.label;
     edit.favourite = draft.favourite;
+    edit.xpr = draft.xpr;
     if (draft.keyMode == KeyMode::Numpad) {
         edit.numpad = draft.numpad;
     } else if (draft.keyMode == KeyMode::Custom) {

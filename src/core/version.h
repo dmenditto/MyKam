@@ -2,6 +2,6 @@
 
 namespace mykam {
 
-constexpr const char* kVersion = "0.9.1-beta";
+constexpr const char* kVersion = "0.9.2-beta";
 
 }  // namespace mykam

@@ -57,6 +57,7 @@ struct Candidate {
     std::string label;
     CustomKey key;
     int order = 0;  // 0 = the file gave none
+    XprMode xpr = XprMode::Keep;
     bool bad = false;
     std::string badReason;
 };
@@ -610,6 +611,15 @@ bool ViewStore::setName(int id, const std::string& name) {
     return true;
 }
 
+bool ViewStore::setXpr(int id, XprMode mode) {
+    const int i = indexOf(id);
+    if (i < 0) {
+        return false;
+    }
+    views_[static_cast<std::size_t>(i)].xpr = mode;
+    return true;
+}
+
 bool ViewStore::setFavourite(int id, bool favourite) {
     const int i = indexOf(id);
     if (i < 0) {
@@ -740,6 +750,9 @@ std::string ViewStore::serialize() const {
         if (v.key.set()) {
             out += prefix + "key=" + encodeKey(v.key) + "\n";
         }
+        if (v.xpr != XprMode::Keep) {
+            out += prefix + "xprealistic=" + xprModeText(v.xpr) + "\n";
+        }
     }
     return out;
 }
@@ -833,6 +846,14 @@ ViewParseResult ViewStore::parse(const std::string& text) {
                     }
                     continue;
                 }
+                if (field == "xprealistic") {
+                    if (!parseXprMode(value, c.xpr)) {
+                        c.xpr = XprMode::Keep;
+                        result.problems.push_back(label + ": xprealistic '" + shorten(value) +
+                                                  "' ignored, it must be on or off");
+                    }
+                    continue;
+                }
                 if (field == "order") {
                     int n = 0;
                     if (parseWholeNumber(value, kMaxOrderValue, n) && n >= 1) {
@@ -900,6 +921,7 @@ ViewParseResult ViewStore::parse(const std::string& text) {
         if (formatFound) {
             v.label = c.label;
             v.order = c.order;
+            v.xpr = c.xpr;
             if (c.key.set()) {
                 if (keyOwner(c.key) != 0) {
                     result.problems.push_back(label + ": key " + encodeKey(c.key) + " is already used by view " +

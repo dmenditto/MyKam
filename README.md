@@ -8,7 +8,7 @@ MyKam is a plugin for X-Plane 12 on Windows. Save the view you are looking at, i
 aircraft, and come back to it with one key or one click. Switching glides from where the camera is to the
 saved view with an eased move instead of a cut.
 
-**Status: beta (0.9.1-beta).** It has had little testing outside the developer's own setup. See
+**Status: beta (0.9.2-beta).** It has had little testing outside the developer's own setup. See
 [Known limitations](#beta-status-and-known-limitations).
 
 ## What it does
@@ -45,7 +45,7 @@ buttons, release and the menu:
 ## Install
 
 1. Quit X-Plane 12.
-2. Download `MyKam-0.9.1-beta-win64.zip` from the [Releases page](https://github.com/dmenditto/MyKam/releases)
+2. Download `MyKam-0.9.2-beta-win64.zip` from the [Releases page](https://github.com/dmenditto/MyKam/releases)
    or from [X-Plane.org](https://forums.x-plane.org/files/file/102414-mykam-saved-cameras-with-smooth-transitions/),
    and unzip it.
 3. Copy the `MyKam` folder into `<X-Plane 12>\Resources\plugins\`. You should end up with:
@@ -55,7 +55,13 @@ buttons, release and the menu:
    - `Resources\plugins\MyKam\skunkcrafts_updater.cfg`
 4. Start X-Plane 12. Open **Plugins > Plugin Admin** and check that **MyKam** is listed and enabled.
 
-If you use another camera plugin, disable it while you try MyKam.
+If you use another camera plugin, disable it while you try MyKam. When X-Camera is enabled, MyKam shows an amber
+note in its window (and a line in Log.txt): X-Camera can move the camera back after MyKam moves it.
+
+**XPRealistic.** When XPRealistic is installed, each view's edit dialog has an XPRealistic choice: *Leave as is*,
+*On* or *Off*. Off pauses XPRealistic's effects when you go to that view (for a still shot), On resumes them
+(after a cockpit glide has ended, so the head does not shake during the glide). XPRealistic's master switch is
+left to you.
 
 ### Updates
 
@@ -138,7 +144,7 @@ Build, test and make the release zip in one go:
 powershell -ExecutionPolicy Bypass -File tools\package.ps1
 ```
 
-This creates `dist\MyKam-0.9.1-beta-win64.zip` and stops if the build or any test fails.
+This creates `dist\MyKam-0.9.2-beta-win64.zip` and stops if the build or any test fails.
 
 To publish that version for SkunkCrafts Updater users, commit the release and run
 `tools\publish-depot.ps1 -Push`. It builds the depot (every file of the zip's `MyKam` folder plus the CRC32

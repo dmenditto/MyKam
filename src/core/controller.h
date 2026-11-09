@@ -41,6 +41,7 @@ struct ViewEdit {
     int numpad = 0;
     CustomKey key;
     bool favourite = false;
+    XprMode xpr = XprMode::Keep;  // what XPRealistic does when the view is reached
 };
 enum class EditResult { Saved, UnknownView, BadName, BadLabel, BadNumpad, BadKey };
 
@@ -120,6 +121,22 @@ public:
     void setOnKeysChanged(std::function<void()> callback);
     // Empty while MyKam is off.
     std::vector<WantedKey> wantedKeys() const;
+
+    // Other plugins (companions.h). The plugin calls checkCompanions every few seconds (never per frame):
+    // it notes which other camera plugins are enabled (one log line when that changes) and whether
+    // XPRealistic is there. When XPRealistic appears its state is taken as "master on, not frozen".
+    void checkCompanions();
+    // Names of the other camera plugins enabled right now ("X-Camera"), "" when none.
+    const std::string& otherCameraPlugins() const { return otherCameras_; }
+    bool xprAvailable() const { return xprAvailable_; }
+    bool xprFrozen() const { return xprFrozen_; }
+    bool xprMasterOn() const { return xprMaster_; }
+    // XPRealistic's MasterSwitch or FreezeMode command began (seen by the plugin's before-handler), from a
+    // key, a button, XPRealistic's menu or MyKam itself; MyKam's own runs are counted when it runs them.
+    void onXprCommand(bool master);
+    // The quick bar's XPRealistic button: pause or resume its effects now (freeze mode). False when
+    // XPRealistic is not there, its master switch is off or the command is missing.
+    bool toggleXprFreeze();
 
     // On / off (mykam/toggle_active). Off gives the camera back to X-Plane, drops the custom keys and
     // ignores every go, save, next and previous (one log line each) until it is turned on again. Starts on;
@@ -217,6 +234,8 @@ private:
     Pose currentBody() const;
     // Run a view command for mykam's own purposes: X-Plane's report of it does not change lastView_.
     bool runOwnViewCommand(const std::string& name);
+    // Bring XPRealistic's freeze to what `mode` asks (Keep: nothing). `label` names the view in the log.
+    void applyXpr(XprMode mode, const std::string& label);
 
     ISim& sim_;
     std::string folder_;
@@ -237,6 +256,12 @@ private:
     bool handoffPending_ = false;  // requested; performHandoff does it on the next frame
     bool ownCommand_ = false;      // mykam itself is running a view command right now
     bool active_ = true;           // false while the user turned MyKam off
+    std::string otherCameras_;     // enabled camera plugins next to MyKam, "" when none
+    bool xprAvailable_ = false;
+    bool xprMaster_ = true;        // counted, see onXprCommand
+    bool xprFrozen_ = false;
+    bool xprOwn_ = false;          // MyKam is running an XPRealistic command right now
+    XprMode xprPending_ = XprMode::Keep;  // applied when the running cockpit glide ends
     std::string lastView_;         // last tracked view command the user ran, empty if none yet
     int heldView_ = 0;
     int activeView_ = 0;

@@ -89,6 +89,7 @@ void Controller::releaseIfHeld() {
     transition_ = Transition();
     motion_.clear();
     cockpitActive_ = false;  // a running head animation ends; nothing is held afterwards
+    xprPending_ = XprMode::Keep;
     handoffArmed_ = false;
     handoffPending_ = false;
     activeView_ = 0;
@@ -385,6 +386,91 @@ void Controller::setActive(bool active) {
     log(active ? "turned on" : "turned off, X-Plane has the camera");
 }
 
+void Controller::checkCompanions() {
+    std::string others;
+    for (const CameraPluginInfo& p : kOtherCameraPlugins) {
+        // Enabled in Plugin Admin and not switched off from its own controls (no dataref: counts as on).
+        if (sim_.isPluginEnabled(p.signature) &&
+            (p.activeDataref == nullptr || sim_.readPluginDataref(p.activeDataref, 1) != 0)) {
+            others += (others.empty() ? "" : ", ") + std::string(p.name);
+        }
+    }
+    if (others != otherCameras_) {
+        if (!others.empty()) {
+            log("warning: " + others + " is running next to MyKam and can move the camera back after MyKam moves it; "
+                "disable one of them in Plugins > Plugin Admin");
+        } else {
+            log("no other camera plugin is running any more");
+        }
+        otherCameras_ = others;
+        touch();
+    }
+    const bool xpr = sim_.isPluginEnabled(kXprSignature);
+    if (xpr != xprAvailable_) {
+        xprAvailable_ = xpr;
+        xprMaster_ = true;  // XPRealistic starts on and not frozen whenever it is enabled
+        xprFrozen_ = false;
+        xprPending_ = XprMode::Keep;
+        log(xpr ? "XPRealistic found: views can turn its effects on or off" : "XPRealistic is no longer running");
+        touch();
+    }
+}
+
+void Controller::onXprCommand(bool master) {
+    if (xprOwn_ || !xprAvailable_) {
+        return;  // MyKam's own run is counted where it is made
+    }
+    if (master) {
+        xprMaster_ = !xprMaster_;
+    } else {
+        xprFrozen_ = !xprFrozen_;
+    }
+    touch();
+}
+
+bool Controller::toggleXprFreeze() {
+    if (!xprAvailable_ || !xprMaster_) {
+        return false;
+    }
+    xprPending_ = XprMode::Keep;  // the user decides now; a choice waiting for a glide to end is dropped
+    xprOwn_ = true;
+    const bool ran = sim_.runPluginCommand(kXprFreezeCommand);
+    xprOwn_ = false;
+    if (!ran) {
+        log(std::string("warning: command ") + kXprFreezeCommand + " not found");
+        return false;
+    }
+    xprFrozen_ = !xprFrozen_;
+    touch();
+    log(std::string("XPRealistic effects ") + (xprFrozen_ ? "paused" : "resumed") + " from the quick bar");
+    return true;
+}
+
+void Controller::applyXpr(XprMode mode, const std::string& label) {
+    if (mode == XprMode::Keep || !xprAvailable_) {
+        return;
+    }
+    const bool wantFrozen = mode == XprMode::Off;
+    if (!xprMaster_) {
+        log("XPRealistic is switched off (master switch), its setting for " + label + " is not applied");
+        return;
+    }
+    if (xprFrozen_ == wantFrozen) {
+        return;
+    }
+    xprOwn_ = true;
+    const bool ran = sim_.runPluginCommand(kXprFreezeCommand);
+    xprOwn_ = false;
+    if (!ran) {
+        log(std::string("warning: command ") + kXprFreezeCommand + " not found, XPRealistic setting for " + label +
+            " not applied");
+        return;
+    }
+    xprFrozen_ = wantFrozen;
+    touch();
+    log(std::string("XPRealistic effects ") + (wantFrozen ? "paused" : "resumed") + " for " + label);
+}
+
 void Controller::notifyKeys() {
     const std::vector<WantedKey> wanted = wantedKeys();
     if (wanted == reportedKeys_) {
@@ -489,6 +575,10 @@ EditResult Controller::editView(int id, const ViewEdit& edit) {
     }
     if (view->favourite != edit.favourite) {
         slots_.setFavourite(id, edit.favourite);
+        changed = true;
+    }
+    if (view->xpr != edit.xpr) {
+        slots_.setXpr(id, edit.xpr);
         changed = true;
     }
     if (changed) {
@@ -656,16 +746,25 @@ void Controller::goToView(int id) {
     }
     const Pose target = view->pose;
     const ViewKind kind = view->kind;
+    const XprMode xpr = view->xpr;
     const std::string label = viewLabel(slots_, id);
     const bool wasIdle = state_ == CameraState::Idle;
     if (wasIdle && sim_.isCameraHeldByOther()) {
         log("another plugin controls the camera, go to " + label + " ignored");
         return;
     }
+    xprPending_ = XprMode::Keep;  // a new choice replaces one still waiting for a glide to end
     if (kind == ViewKind::Cockpit) {
         if (goToCockpitView(label, target)) {
             activeView_ = id;
             touch();
+            // Pausing is done at once, so XPRealistic does not shake the head during the glide; resuming
+            // waits until the glide has ended for the same reason.
+            if (xpr == XprMode::On && cockpitActive_) {
+                xprPending_ = XprMode::On;
+            } else {
+                applyXpr(xpr, label);
+            }
         }
         return;
     }
@@ -693,6 +792,7 @@ void Controller::goToView(int id) {
     activeView_ = id;
     touch();
     syncMouseCapture();
+    applyXpr(xpr, label);
 }
 
 bool Controller::goToCockpitView(const std::string& label, const Pose& target) {
@@ -729,6 +829,11 @@ bool Controller::tickCockpit(double dtSeconds) {
     sim_.writePilotHead(head);
     if (!cockpit_.active()) {
         cockpitActive_ = false;  // done: nothing is held, X-Plane's own controls work again
+        if (xprPending_ != XprMode::Keep) {
+            const XprMode pending = xprPending_;
+            xprPending_ = XprMode::Keep;
+            applyXpr(pending, viewLabel(slots_, activeView_));
+        }
         return false;
     }
     return true;

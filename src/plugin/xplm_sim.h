@@ -40,6 +40,9 @@ public:
     bool switchToCockpitView() override;
     void requestCockpitFrames() override;
     bool runViewCommand(const std::string& name) override;
+    bool runPluginCommand(const std::string& name) override;
+    bool isPluginEnabled(const std::string& signature) override;
+    int readPluginDataref(const std::string& name, int missing) override;
     void requestHandoffFrame() override;
     void setMouseCapture(bool on) override { mouseLayer_.setActive(on); }
     std::string keyName(int virtualKey) override;

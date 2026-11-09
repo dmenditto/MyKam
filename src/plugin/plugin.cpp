@@ -52,6 +52,8 @@ struct Plugin {
         XPLMHotKeyID id = nullptr;
     };
     std::vector<std::unique_ptr<RegisteredKey>> hotKeys;
+    XPLMCommandRef xprMaster = nullptr;  // XPRealistic commands we watch, while it is loaded
+    XPLMCommandRef xprFreeze = nullptr;
 };
 
 // The core and X-Plane use the same modifier bits; the stored files rely on it.
@@ -179,6 +181,66 @@ int viewSelectHandler(XPLMCommandRef, XPLMCommandPhase phase, void* refcon) {
     } catch (...) {
     }
     return 1;
+}
+
+// Before-handler for XPRealistic's MasterSwitch (refcon 1) and FreezeMode (refcon 0) commands. It only
+// counts the toggle and always returns 1, so XPRealistic still acts on it.
+int xprCommandHandler(XPLMCommandRef, XPLMCommandPhase phase, void* refcon) {
+    Plugin* p = g_plugin;
+    if (p != nullptr && p->controller && phase == xplm_CommandBegin) {
+        try {
+            p->controller->onXprCommand(reinterpret_cast<std::intptr_t>(refcon) == 1);
+        } catch (...) {
+        }
+    }
+    return 1;
+}
+
+void unhookXpr(Plugin& p) {
+    if (p.xprMaster != nullptr) {
+        XPLMUnregisterCommandHandler(p.xprMaster, xprCommandHandler, 1, reinterpret_cast<void*>(std::intptr_t{1}));
+        p.xprMaster = nullptr;
+    }
+    if (p.xprFreeze != nullptr) {
+        XPLMUnregisterCommandHandler(p.xprFreeze, xprCommandHandler, 1, reinterpret_cast<void*>(std::intptr_t{0}));
+        p.xprFreeze = nullptr;
+    }
+}
+
+// XPRealistic loads after MyKam (plugins start in name order), so its commands are looked up here, once
+// it is found, and dropped again when it goes away.
+void syncXprHooks(Plugin& p) {
+    if (!p.controller->xprAvailable()) {
+        unhookXpr(p);
+        return;
+    }
+    if (p.xprMaster == nullptr) {
+        p.xprMaster = XPLMFindCommand(mykam::kXprMasterCommand);
+        if (p.xprMaster != nullptr) {
+            XPLMRegisterCommandHandler(p.xprMaster, xprCommandHandler, 1, reinterpret_cast<void*>(std::intptr_t{1}));
+        }
+    }
+    if (p.xprFreeze == nullptr) {
+        p.xprFreeze = XPLMFindCommand(mykam::kXprFreezeCommand);
+        if (p.xprFreeze != nullptr) {
+            XPLMRegisterCommandHandler(p.xprFreeze, xprCommandHandler, 1, reinterpret_cast<void*>(std::intptr_t{0}));
+        }
+    }
+}
+
+// Flight loop that looks at the other plugins every few seconds (Plugin Admin can change them at any time).
+constexpr float kCompanionCheckSeconds = 3.0f;
+float companionFlightLoop(float, float, int, void*) {
+    Plugin* p = g_plugin;
+    if (p == nullptr || !p->controller) {
+        return 0.0f;
+    }
+    try {
+        p->controller->checkCompanions();
+        syncXprHooks(*p);
+    } catch (...) {
+    }
+    return kCompanionCheckSeconds;
 }
 
 // Flight loop for the cockpit head animation: every frame while animating, then 0 (not called again).
@@ -448,6 +510,8 @@ PLUGIN_API int XPluginEnable(void) {
         XPLMRegisterFlightLoopCallback(headFlightLoop, 0.0f, nullptr);  // interval 0: idle until asked
         p.sim.setHandoffFlightLoop(handoffFlightLoop);
         XPLMRegisterFlightLoopCallback(handoffFlightLoop, 0.0f, nullptr);  // idle until a hand-over is requested
+        // First look after one second, when the plugins loading after MyKam have started.
+        XPLMRegisterFlightLoopCallback(companionFlightLoop, 1.0f, nullptr);
         p.controller->setOnKeysChanged([]() {
             try {
                 if (g_plugin != nullptr) {
@@ -486,6 +550,8 @@ PLUGIN_API void XPluginDisable(void) {
         unregisterViewSelectCommands(*g_plugin);
         XPLMUnregisterFlightLoopCallback(headFlightLoop, nullptr);
         XPLMUnregisterFlightLoopCallback(handoffFlightLoop, nullptr);
+        XPLMUnregisterFlightLoopCallback(companionFlightLoop, nullptr);
+        unhookXpr(*g_plugin);
         if (g_plugin->controller) {
             g_plugin->controller->release();
         }

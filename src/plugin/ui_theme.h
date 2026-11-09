@@ -99,6 +99,7 @@ inline constexpr Icon kIconChevronLeft{0xE5CB, "<"};   // chevron_left
 inline constexpr Icon kIconChevronRight{0xE5CC, ">"};  // chevron_right
 inline constexpr Icon kIconUp{0xE316, "^"};            // keyboard_arrow_up
 inline constexpr Icon kIconDown{0xE313, "v"};          // keyboard_arrow_down
+inline constexpr Icon kIconXpr{0xE62D, "X"};           // vibration (XPRealistic effects)
 
 // Every icon above, for the atlas glyph range.
 inline constexpr Icon kAllIcons[] = {
@@ -106,7 +107,7 @@ inline constexpr Icon kAllIcons[] = {
     kIconMinimise, kIconRestore, kIconPopOut, kIconPrevious, kIconNext,   kIconCockpit,     kIconFree,
     kIconChase,   kIconRelease, kIconMenu,   kIconCircle,   kIconTower,  kIconRunway,      kIconLinear,
     kIconStill,   kIconRide,   kIconWingman, kIconAdd, kIconChevronLeft, kIconChevronRight,
-    kIconUp,      kIconDown,
+    kIconUp,      kIconDown,   kIconXpr,
 };
 
 // ------------------------------------------------------------------------------------------ fonts

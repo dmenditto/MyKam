@@ -43,6 +43,13 @@ public:
     // Run the named X-Plane command once (XPLMFindCommand, then XPLMCommandOnce). False if no command
     // with that name exists. The controller only passes names from the tracked sim/view/ list.
     virtual bool runViewCommand(const std::string& name) = 0;
+    // Run another plugin's command once, the same way. Only names from companions.h are passed.
+    virtual bool runPluginCommand(const std::string& name) = 0;
+    // True when a plugin with this signature is loaded and enabled (XPLMFindPluginBySignature,
+    // XPLMIsPluginEnabled).
+    virtual bool isPluginEnabled(const std::string& signature) = 0;
+    // The value of another plugin's int or float dataref, rounded; `missing` when it does not exist.
+    virtual int readPluginDataref(const std::string& name, int missing) = 0;
     // Ask for Controller::performHandoff to be called once on the next frame, outside the camera
     // callback (a flight loop).
     virtual void requestHandoffFrame() = 0;

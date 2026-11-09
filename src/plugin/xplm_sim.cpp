@@ -1,6 +1,7 @@
 #include "xplm_sim.h"
 
 #include <algorithm>
+#include <cmath>
 
 #include "core/file_io.h"
 
@@ -73,6 +74,34 @@ bool XplmSim::runViewCommand(const std::string& name) {
     }
     XPLMCommandOnce(cmd);
     return true;
+}
+
+bool XplmSim::runPluginCommand(const std::string& name) {
+    return runViewCommand(name);  // the same XPLM calls; kept apart so the core says what it runs
+}
+
+bool XplmSim::isPluginEnabled(const std::string& signature) {
+    const XPLMPluginID id = XPLMFindPluginBySignature(signature.c_str());
+    return id != XPLM_NO_PLUGIN_ID && XPLMIsPluginEnabled(id) != 0;
+}
+
+int XplmSim::readPluginDataref(const std::string& name, int missing) {
+    // Looked up each time: the owning plugin can come and go (it runs every few seconds, not per frame).
+    XPLMDataRef ref = XPLMFindDataRef(name.c_str());
+    if (ref == nullptr) {
+        return missing;
+    }
+    const XPLMDataTypeID types = XPLMGetDataRefTypes(ref);
+    if ((types & xplmType_Int) != 0) {
+        return XPLMGetDatai(ref);
+    }
+    if ((types & xplmType_Float) != 0) {
+        return static_cast<int>(std::lround(XPLMGetDataf(ref)));
+    }
+    if ((types & xplmType_Double) != 0) {
+        return static_cast<int>(std::lround(XPLMGetDatad(ref)));
+    }
+    return missing;
 }
 
 void XplmSim::requestHandoffFrame() {

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "companions.h"
 #include "pose.h"
 
 // Saved views for one aircraft: a list of up to 99 views (cockpit or external) kept in the aircraft
@@ -95,6 +96,7 @@ struct SavedView {
     std::string label;        // quick bar label, "" or 1 to 2 characters A-Z / 0-9
     CustomKey key;            // optional custom key combination
     int order = 0;            // position inside its group (1 = first), see ViewStore::ordered
+    XprMode xpr = XprMode::Keep;  // what XPRealistic does on arrival (stored as viewN.xprealistic=on|off)
 };
 
 // One custom key the plugin should have registered with X-Plane, as decided by the core.
@@ -153,6 +155,8 @@ public:
     // Custom key: a valid key moves from the view that had it; vkey 0 clears. False for an unknown id or
     // an invalid key.
     bool setKey(int id, const CustomKey& key);
+    // What XPRealistic does when the view is reached. False for an unknown id.
+    bool setXpr(int id, XprMode mode);
     bool remove(int id);
     // The id of the view with this hotkey, 0 when none.
     int hotkeyOwner(int hotkey) const;

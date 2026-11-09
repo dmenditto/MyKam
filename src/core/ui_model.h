@@ -30,6 +30,7 @@ struct ViewRow {
     std::string label;      // quick bar label (1 to 2 characters, uppercase), "" when none
     std::string keyText;    // the custom key ("Ctrl+Shift+W"), else "Num N", else "" (the window shows a dash)
     bool customKey = false;
+    XprMode xpr = XprMode::Keep;  // what XPRealistic does on arrival
 };
 
 // Which kind of key the edit dialog assigns.
@@ -44,6 +45,7 @@ struct EditDraft {
     int numpad = 0;     // 1..10 (10 = numpad 0) when keyMode is Numpad
     CustomKey custom;   // the captured key when keyMode is Custom
     bool favourite = false;
+    XprMode xpr = XprMode::Keep;  // XPRealistic on arrival
 };
 
 // What is wrong with a draft, one text per field ("" = fine). Save is allowed when all are empty.
@@ -134,6 +136,23 @@ public:
     bool quickBarVisible() const { return controller_.config().showQuickBar && controller_.active(); }
     bool active() const { return controller_.active(); }
     void toggleActive() { controller_.toggleActive(); }
+    // Other plugins. The window shows a warning while another camera plugin runs, and the edit dialog's
+    // XPRealistic choice while XPRealistic is loaded (or the view already has a choice).
+    const std::string& otherCameraPlugins() const { return controller_.otherCameraPlugins(); }
+    std::string cameraConflictNote() const;
+    bool xprAvailable() const { return controller_.xprAvailable(); }
+    // The quick bar's XPRealistic button: shown while XPRealistic is loaded; "running" when its master
+    // switch is on and it is not paused. Click pauses or resumes.
+    bool xprRunning() const { return controller_.xprMasterOn() && !controller_.xprFrozen(); }
+    bool xprMasterOn() const { return controller_.xprMasterOn(); }
+    bool toggleXpr() { return controller_.toggleXprFreeze(); }
+    // The tooltip of that button.
+    std::string xprButtonTooltip() const;
+    // "XPR on" / "XPR off" for a row whose view sets XPRealistic, "" for Leave as is.
+    static const char* xprRowText(XprMode mode);
+    bool showXprChoice(const EditDraft& draft) const {
+        return controller_.xprAvailable() || draft.xpr != XprMode::Keep;
+    }
     // The X-Plane view command the user last chose (empty if none yet); the window highlights its tile.
     const std::string& lastXPlaneView() const { return controller_.lastViewCommand(); }
     bool quickBarAtTop() const { return controller_.config().quickBarPosition == QuickBarPosition::Top; }
